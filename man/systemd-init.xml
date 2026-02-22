@@ -1,0 +1,127 @@
+<?xml version='1.0'?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+  "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">
+<!-- SPDX-License-Identifier: LGPL-2.1-or-later -->
+
+<refentry id="systemd-init" conditional="STANDALONE_BINARIES"
+    xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <refentryinfo>
+    <title>systemd-init</title>
+    <productname>systemd</productname>
+  </refentryinfo>
+
+  <refmeta>
+    <refentrytitle>systemd-init</refentrytitle>
+    <manvolnum>8</manvolnum>
+  </refmeta>
+
+  <refnamediv>
+    <refname>systemd-init</refname>
+    <refname>init</refname>
+    <refpurpose>minimal PID 1 that starts the system manager</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>/usr/lib/systemd/systemd-init</command>
+      <arg choice="opt" rep="repeat">OPTIONS</arg>
+      <arg choice="opt">--</arg>
+      <arg choice="opt" rep="repeat">MANAGER_ARGS</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+
+    <para><command>systemd-init</command> is a minimal PID 1 intended to remain
+    small and stable. It spawns the system manager <command>systemd-smd</command>,
+    forwards signals to it, reaps children, and coordinates shutdown.</para>
+
+    <para>This binary is built when <option>-Dstandalone-binaries=true</option>
+    is enabled. In that configuration, the main system manager binary is
+    <command>systemd-smd</command>, and <command>systemd-init</command> becomes
+    PID 1.</para>
+
+    <para>When invoked as <command>init</command> or <command>telinit</command> by
+    a non-PID1 process (and when SysV compatibility is enabled),
+    <command>systemd-init</command> execs <command>systemctl</command>, matching
+    traditional SysV behavior.</para>
+  </refsect1>
+
+  <refsect1>
+    <title>Options</title>
+
+    <variablelist>
+      <varlistentry>
+        <term><option>--shutdown-timeout=SECONDS</option></term>
+        <listitem><para>Maximum time to wait for the manager to exit after a
+        shutdown signal (<literal>SIGTERM</literal>, <literal>SIGINT</literal>,
+        <literal>SIGPWR</literal>). The default is 90 seconds.</para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--on-manager-exit=MODE</option></term>
+        <listitem><para>Action when the manager exits unexpectedly (without a
+        shutdown signal). <replaceable>MODE</replaceable> may be
+        <literal>reboot</literal>, <literal>poweroff</literal>,
+        <literal>halt</literal>, <literal>respawn</literal>, or
+        <literal>freeze</literal>. The default is <literal>reboot</literal>.</para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--config=PATH</option></term>
+        <listitem><para>Read configuration from the specified file instead of
+        <filename>/etc/systemd/init.conf</filename>.</para></listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Configuration</title>
+
+    <para><command>systemd-init</command> reads
+    <filename>/etc/systemd/init.conf</filename> by default. The file contains
+    simple <literal>KEY=VALUE</literal> pairs. Supported keys are:</para>
+
+    <variablelist>
+      <varlistentry>
+        <term><varname>ShutdownTimeoutSec</varname></term>
+        <listitem><para>Override the shutdown wait timeout in seconds.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><varname>OnManagerExit</varname></term>
+        <listitem><para>Set the unexpected manager exit policy. Accepted values
+        are the same as <option>--on-manager-exit=</option>.</para></listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Files</title>
+    <variablelist>
+      <varlistentry>
+        <term><filename>/usr/lib/systemd/systemd-init</filename></term>
+        <listitem><para>Minimal PID 1 binary.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><filename>/usr/lib/systemd/systemd-smd</filename></term>
+        <listitem><para>System manager spawned by <command>systemd-init</command>.</para></listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><filename>/etc/systemd/init.conf</filename></term>
+        <listitem><para>Configuration file.</para></listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>See Also</title>
+    <para>
+      <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>systemd-system.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>systemctl</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    </para>
+  </refsect1>
+
+</refentry>

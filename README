@@ -337,6 +337,23 @@ STATIC COMPILATION AND "STANDALONE" BINARIES:
         systemd binaries to be linked to instances of the private shared
         library that can be installed in parallel.
 
+        When '-Dstandalone-binaries=true' is enabled, the main service manager
+        binary is built as "systemd-smd" and a minimal static PID1 called
+        "systemd-init" is also built. systemd-init spawns the service manager
+        (/usr/lib/systemd/systemd-smd), reaps children, and forwards signals
+        to the manager. The shutdown wait
+        timeout defaults to 90 seconds and can be overridden with
+        --shutdown-timeout=SECONDS. When invoked as init/telinit by a non-PID1
+        process, systemd-init behaves like telinit and execs systemctl (when
+        SysV compatibility support is enabled). Behavior on unexpected manager
+        exit can be configured with --on-manager-exit=reboot|poweroff|halt|respawn|freeze
+        (default: reboot).
+
+        systemd-init also reads /etc/systemd/init.conf (override with --config=)
+        with simple KEY=VALUE pairs. Supported keys are:
+          ShutdownTimeoutSec=SECONDS
+          OnManagerExit=reboot|poweroff|halt|respawn|freeze
+
         Again: Using the default shared linking is recommended, building static
         or "standalone" versions is not. Mixing versions of systemd components
         that would normally be built and used together (in particular various

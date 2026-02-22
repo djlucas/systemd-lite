@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+from pathlib import Path
+
 from lxml import etree as tree
 
 
@@ -9,6 +11,8 @@ class CustomResolver(tree.Resolver):
         if 'custom-entities.ent' in url:
             return self.resolve_filename('man/custom-entities.ent', context)
         if 'ethtool-link-mode' in url:
+            if Path('build/src/shared/ethtool-link-mode.xml').exists():
+                return self.resolve_filename('build/src/shared/ethtool-link-mode.xml', context)
             return self.resolve_filename('src/shared/ethtool-link-mode.xml', context)
 
         return None

@@ -947,6 +947,7 @@ manpages = [
  ['systemd-id128', '1', [], ''],
  ['systemd-importd.service', '8', ['systemd-importd'], 'ENABLE_IMPORTD'],
  ['systemd-inhibit', '1', [], ''],
+ ['systemd-init', '8', ['init'], 'STANDALONE_BINARIES'],
  ['systemd-initctl.service',
   '8',
   ['systemd-initctl', 'systemd-initctl.socket'],

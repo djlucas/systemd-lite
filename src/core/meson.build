@@ -168,7 +168,7 @@ executor_libs = get_option('link-executor-shared') ? \
 
 executables += [
         libexec_template + {
-                'name' : 'systemd',
+                'name' : systemd_manager_name,
                 'dbus' : true,
                 'public' : true,
                 'sources' : systemd_sources,
@@ -176,6 +176,7 @@ executables += [
                         libcore,
                         libshared,
                 ],
+                'c_args' : have_standalone_binaries ? ['-DSYSTEMD_SEPARATE_INIT=1'] : [],
                 'dependencies' : libseccomp,
         },
         libexec_template + {

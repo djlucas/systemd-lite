@@ -85,6 +85,7 @@ conf.set10('HAVE_SPLIT_BIN', split_bin,
            description : 'bin and sbin directories are separate')
 
 have_standalone_binaries = get_option('standalone-binaries')
+conf.set('STANDALONE_BINARIES', have_standalone_binaries ? 1 : 0)
 
 sysvinit_path = get_option('sysvinit-path')
 sysvrcnd_path = get_option('sysvrcnd-path')
@@ -120,6 +121,8 @@ localstatedir = '/' / get_option('localstatedir')
 
 libexecdir = prefixdir / 'lib/systemd'
 pkglibdir = libdir / 'systemd'
+
+systemd_manager_name = have_standalone_binaries ? 'systemd-smd' : 'systemd'
 
 install_sysconfdir = get_option('install-sysconfdir') != 'false'
 install_sysconfdir_samples = get_option('install-sysconfdir') == 'true'
@@ -233,7 +236,7 @@ conf.set_quoted('RC_LOCAL_PATH',                              get_option('rc-loc
 conf.set_quoted('SYSCONF_DIR',                                sysconfdir)
 conf.set_quoted('SYSCTL_DIR',                                 sysctldir)
 conf.set_quoted('SYSTEMCTL_BINARY_PATH',                      bindir / 'systemctl')
-conf.set_quoted('SYSTEMD_BINARY_PATH',                        libexecdir / 'systemd')
+conf.set_quoted('SYSTEMD_BINARY_PATH',                        libexecdir / systemd_manager_name)
 conf.set_quoted('SYSTEMD_EXECUTOR_BINARY_PATH',               libexecdir / 'systemd-executor')
 conf.set_quoted('SYSTEMD_CATALOG_DIR',                        catalogdir)
 conf.set_quoted('SYSTEMD_CGROUPS_AGENT_PATH',                 libexecdir / 'systemd-cgroups-agent')
@@ -2209,6 +2212,7 @@ subdir('src/hostname')
 subdir('src/hwdb')
 subdir('src/id128')
 subdir('src/import')
+subdir('src/init')
 subdir('src/initctl')
 subdir('src/integritysetup')
 subdir('src/journal')

@@ -69,6 +69,9 @@
 #include "mkdir-label.h"
 #include "mount-setup.h"
 #include "os-util.h"
+#ifndef SYSTEMD_SEPARATE_INIT
+#define SYSTEMD_SEPARATE_INIT 0
+#endif
 #include "pager.h"
 #include "parse-argument.h"
 #include "parse-util.h"
@@ -1441,6 +1444,7 @@ static int fixup_environment(void) {
         return 0;
 }
 
+#if !SYSTEMD_SEPARATE_INIT
 static void redirect_telinit(int argc, char *argv[]) {
 
         /* This is compatibility support for SysV, where calling init as a user is identical to telinit. */
@@ -1457,6 +1461,7 @@ static void redirect_telinit(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
 #endif
 }
+#endif
 
 static int become_shutdown(int objective, int retval) {
         static const char* const table[_MANAGER_OBJECTIVE_MAX] = {
@@ -2816,16 +2821,35 @@ int main(int argc, char *argv[]) {
         bool skip_setup, loaded_policy = false, queue_default_job = false, first_boot = false;
         char *switch_root_dir = NULL, *switch_root_init = NULL;
         usec_t before_startup, after_startup;
+#if SYSTEMD_SEPARATE_INIT
+        static char systemd[] = "systemd-smd";
+#else
         static char systemd[] = "systemd";
+#endif
         const char *error_message = NULL;
         int r, retval = EXIT_FAILURE;
         Manager *m = NULL;
         FDSet *fds = NULL;
+        bool is_pid1;
+#if SYSTEMD_SEPARATE_INIT
+        const bool separate_init = true;
+#else
+        const bool separate_init = false;
+#endif
 
         assert_se(argc > 0 && !isempty(argv[0]));
 
+        is_pid1 = getpid_cached() == 1;
+
+        if (separate_init && is_pid1) {
+                fprintf(stderr, "systemd-smd must not run as PID 1 when built with separate init support.\n");
+                return EXIT_FAILURE;
+        }
+
+#if !SYSTEMD_SEPARATE_INIT
         /* SysV compatibility: redirect init → telinit */
         redirect_telinit(argc, argv);
+#endif
 
         /* Take timestamps early on */
         dual_timestamp_from_monotonic(&kernel_timestamp, 0);
@@ -2855,7 +2879,7 @@ int main(int argc, char *argv[]) {
         /* Make sure that if the user says "syslog" we actually log to the journal. */
         log_set_upgrade_syslog_to_journal(true);
 
-        if (getpid_cached() == 1) {
+        if (is_pid1 || separate_init) {
                 /* When we run as PID 1 force system mode */
                 arg_runtime_scope = RUNTIME_SCOPE_SYSTEM;
 
@@ -2874,7 +2898,7 @@ int main(int argc, char *argv[]) {
 
                 if (detect_container() <= 0) {
 
-                        /* Running outside of a container as PID 1 */
+                        /* Running outside of a container as the system manager */
                         log_set_target_and_open(LOG_TARGET_KMSG);
 
                         if (in_initrd())
@@ -2925,7 +2949,7 @@ int main(int argc, char *argv[]) {
                         log_set_target(LOG_TARGET_JOURNAL_OR_KMSG);
 
                 } else {
-                        /* Running inside a container, as PID 1 */
+                        /* Running inside a container as the system manager */
                         log_set_target_and_open(LOG_TARGET_CONSOLE);
 
                         /* For later on, see above... */
@@ -2972,18 +2996,20 @@ int main(int argc, char *argv[]) {
                 if (!skip_setup)
                         (void) cache_efi_options_variable();
         } else {
-                /* Running as user instance */
-                arg_runtime_scope = RUNTIME_SCOPE_USER;
+                /* Running as non-PID1 instance */
+                arg_runtime_scope = separate_init ? RUNTIME_SCOPE_SYSTEM : RUNTIME_SCOPE_USER;
                 log_set_always_reopen_console(true);
                 log_set_target_and_open(LOG_TARGET_AUTO);
 
                 /* clear the kernel timestamp, because we are not PID 1 */
                 kernel_timestamp = DUAL_TIMESTAMP_NULL;
 
-                /* Clear ambient capabilities, so services do not inherit them implicitly. Dropping them does
-                 * not affect the permitted and effective sets which are important for the manager itself to
-                 * operate. */
-                capability_ambient_set_apply(0, /* also_inherit= */ false);
+                if (!separate_init) {
+                        /* Clear ambient capabilities, so services do not inherit them implicitly. Dropping them does
+                         * not affect the permitted and effective sets which are important for the manager itself to
+                         * operate. */
+                        capability_ambient_set_apply(0, /* also_inherit= */ false);
+                }
 
                 r = mac_init();
                 if (r < 0) {
@@ -3184,7 +3210,7 @@ finish:
          * here explicitly. valgrind will only generate nice output on
          * exit(), not on exec(), hence let's do the former not the
          * latter here. */
-        if (getpid_cached() == 1 && RUNNING_ON_VALGRIND) {
+        if (is_pid1 && !separate_init && RUNNING_ON_VALGRIND) {
                 /* Cleanup watchdog_device strings for valgrind. We need them
                  * in become_shutdown() so normally we cannot free them yet. */
                 watchdog_free_device();
@@ -3198,7 +3224,7 @@ finish:
          * LSan check would not print any actionable information and would just crash
          * PID 1. To make this a bit more helpful, let's try to open /dev/console,
          * and if we succeed redirect LSan's report there. */
-        if (getpid_cached() == 1) {
+        if (is_pid1 && !separate_init) {
                 _cleanup_close_ int tty_fd = -EBADF;
 
                 tty_fd = open_terminal("/dev/console", O_WRONLY|O_NOCTTY|O_CLOEXEC);
@@ -3228,7 +3254,7 @@ finish:
         watchdog_free_device();
         arg_watchdog_device = mfree(arg_watchdog_device);
 
-        if (getpid_cached() == 1) {
+        if (is_pid1 && !separate_init) {
                 if (error_message)
                         manager_status_printf(NULL, STATUS_TYPE_EMERGENCY,
                                               ANSI_HIGHLIGHT_RED "!!!!!!" ANSI_NORMAL,
