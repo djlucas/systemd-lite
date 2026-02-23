@@ -1,0 +1,6 @@
+[Unit]
+Description=Systemd Timer Manager (placeholder)
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/systemd/systemd-timerd

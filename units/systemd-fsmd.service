@@ -1,0 +1,6 @@
+[Unit]
+Description=Systemd Filesystem Manager (placeholder)
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/systemd/systemd-fsmd

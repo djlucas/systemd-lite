@@ -60,6 +60,9 @@ units = [
           'conditions' : ['ENABLE_INITRD'],
           'symlinks' : ['initrd.target.wants/'],
         },
+        { 'file' : 'systemd-fsmd.service',
+          'symlinks' : ['sysinit.target.wants/'],
+        },
         {
           'file' : 'systemd-bsod.service.in',
           'conditions' : ['HAVE_QRENCODE', 'ENABLE_INITRD'],
@@ -404,6 +407,9 @@ units = [
           'conditions' : ['HAVE_KMOD'],
           'symlinks' : ['sysinit.target.wants/'],
         },
+        { 'file' : 'systemd-socketd.service',
+          'symlinks' : ['sockets.target.wants/'],
+        },
         { 'file' : 'systemd-network-generator.service.in' },
         {
           'file' : 'systemd-networkd-wait-online.service.in',
@@ -631,6 +637,9 @@ units = [
           'file' : 'systemd-tmpfiles-setup.service',
           'conditions' : ['ENABLE_TMPFILES'],
           'symlinks' : ['sysinit.target.wants/'],
+        },
+        { 'file' : 'systemd-timerd.service',
+          'symlinks' : ['timers.target.wants/'],
         },
         { 'file' : 'systemd-udev-settle.service' },
         {

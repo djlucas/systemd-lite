@@ -634,6 +634,12 @@ static int run(int argc, char *argv[]) {
         _cleanup_(sd_bus_flush_close_unrefp) sd_bus *bus = NULL;
         int r;
 
+        (void) argc;
+        (void) argv;
+        /* TODO: implement standalone locale manager. */
+        fprintf(stderr, "systemd-localed: not implemented yet\n");
+        return 1;
+
         log_setup();
 
         r = service_parse_argv("systemd-localed.service",
